@@ -122,7 +122,11 @@ const Chatbot: React.FC<ChatbotProps> = ({
           };
           await addMessageWithTypingEffect(thankMessage);
 
-          onScheduleConfirm(selectedTimes, true); // 불가능 시간 저장
+          const impossibleTimes = selectedTimes.map((time) => ({
+            ...time,
+            isImpossible: true,
+          }));
+          onScheduleConfirm(impossibleTimes, true);
         } else {
           const saveMessage: Message = {
             text: "선택하신 시간이 저장되었습니다.",
@@ -136,9 +140,15 @@ const Chatbot: React.FC<ChatbotProps> = ({
           };
           await addMessageWithTypingEffect(nextMessage);
 
+          const possibleTimes = selectedTimes.map((time) => ({
+            ...time,
+            isImpossible: false,
+          }));
+          onScheduleConfirm(possibleTimes, false);
+
+          setSelectedTimes([]);
           setIsSelectingImpossible(true);
           setShowSchedule(true);
-          onScheduleConfirm(selectedTimes, false); // 가능 시간 저장
         }
       } else {
         const botResponse: Message = {

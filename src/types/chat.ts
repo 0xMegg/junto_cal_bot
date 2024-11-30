@@ -14,6 +14,7 @@ export interface TimeSlot {
   day: string;
   hour: number;
   isSelected: boolean;
+  isImpossible?: boolean;
 }
 
 export interface ScheduleGridProps {
