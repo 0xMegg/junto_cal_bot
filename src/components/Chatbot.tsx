@@ -18,6 +18,15 @@ const Chatbot: React.FC<ChatbotProps> = ({
   const [isSelectingImpossible, setIsSelectingImpossible] = useState(false);
   const [showInput, setShowInput] = useState(true);
   const [inputOpacity, setInputOpacity] = useState(1);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  React.useEffect(() => {
+    scrollToBottom();
+  }, [messages, showSchedule]);
 
   React.useEffect(() => {
     const initialMessage: Message = {
@@ -244,6 +253,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
             />
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
       {showInput && (
         <div
