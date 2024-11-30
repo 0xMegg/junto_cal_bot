@@ -59,11 +59,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
   return (
     <div className="w-full overflow-x-auto">
-      <div className="text-sm font-medium mb-2">
-        {isSelectingImpossible
-          ? "참여가 불가능한 시간을 선택해주세요 (복수 선택 가능)"
-          : "준토에 참여하고 싶은 시간을 선택해주세요 (복수 선택 가능)"}
-      </div>
+      <div className="text-sm font-medium mb-2"></div>
       <div className="grid grid-cols-8 gap-1">
         <div className="h-8"></div>
         {days.map((day) => (
@@ -97,16 +93,18 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
           </React.Fragment>
         ))}
       </div>
-      {selectedTimes.length > 0 && (
-        <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-end">
+        {selectedTimes.length > 0 ? (
           <button
             onClick={handleConfirm}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             선택 완료
           </button>
-        </div>
-      )}
+        ) : (
+          <div className="px-4 py-2 h-[40px] w-[89px]"></div>
+        )}
+      </div>
     </div>
   );
 };
