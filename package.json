@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "@types/node": "22.10.1",
@@ -21,5 +23,9 @@
     "react-dom": "18.3.1",
     "tailwindcss": "3.4.15",
     "typescript": "5.7.2"
+  },
+  "homepage": "https://0xmegg.github.io/junto_cal_bot",
+  "devDependencies": {
+    "gh-pages": "^6.2.0"
   }
 }
