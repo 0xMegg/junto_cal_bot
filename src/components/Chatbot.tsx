@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
-interface Message {
-  type: "bot" | "user";
+interface DialogueNode {
   content: string;
   options?: string[];
+  next?: { [key: string]: DialogueNode };
 }
 
 const ChatContainer = styled.div`
@@ -51,41 +51,60 @@ const OptionButton = styled.button<{ $visible: boolean }>`
   }
 `;
 
+const dialogueTree: DialogueNode = {
+  content: "질문 1",
+  options: ["대답버튼1", "대답버튼2", "대답버튼3"],
+  next: {
+    대답버튼1: {
+      content: "질문 2-1",
+      options: ["대답 2-1-1", "대답 2-1-2", "대답 2-1-3"],
+    },
+    대답버튼2: {
+      content: "질문 2-2",
+      options: ["대답 2-2-1", "대답 2-2-2", "대답 2-2-3"],
+    },
+    대답버튼3: {
+      content: "질문 2-3",
+      options: ["대답 2-3-1", "대답 2-3-2", "대답 2-3-3"],
+    },
+  },
+};
+
 const Chatbot = () => {
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const [visibleOptions, setVisibleOptions] = useState<boolean[]>([]);
+  const [currentNode, setCurrentNode] = useState<DialogueNode>(dialogueTree);
 
-  const message: Message = {
-    type: "bot",
-    content:
-      "질문 1 : 글자수를 늘리기 위한 아무 의미 없는 텍스트를 길게 칩니다.",
-    options: ["대답버튼1", "대답버튼2", "대답버튼3"],
+  const handleOptionClick = (option: string) => {
+    if (currentNode.next && currentNode.next[option]) {
+      setCurrentNode(currentNode.next[option]);
+    }
   };
 
   useEffect(() => {
-    if (!isTyping && message.options) {
-      message.options.forEach((_, index) => {
+    if (!isTyping && currentNode.options) {
+      currentNode.options.forEach((_, index) => {
         setTimeout(() => {
           setVisibleOptions((prev) => {
             const newVisible = [...prev];
             newVisible[index] = true;
             return newVisible;
           });
-        }, index * 300); // 각 버튼이 300ms 간격으로 나타남
+        }, index * 300);
       });
     }
-  }, [isTyping, message.options]);
+  }, [isTyping, currentNode.options]);
 
   useEffect(() => {
     let index = 0;
     setIsTyping(true);
     setDisplayedText("");
-    setVisibleOptions([]); // 옵션 버튼 초기화
+    setVisibleOptions([]);
 
     const typingInterval = setInterval(() => {
-      if (index < message.content.length) {
-        setDisplayedText(message.content.slice(0, index + 1));
+      if (index < currentNode.content.length) {
+        setDisplayedText(currentNode.content.slice(0, index + 1));
         index++;
       } else {
         setIsTyping(false);
@@ -94,7 +113,7 @@ const Chatbot = () => {
     }, 50);
 
     return () => clearInterval(typingInterval);
-  }, [message.content]);
+  }, [currentNode]);
 
   return (
     <ChatContainer>
@@ -105,10 +124,11 @@ const Chatbot = () => {
       {!isTyping && (
         <OptionsContainer>
           <BubbleContent $isBot={false}>
-            {message.options?.map((option, index) => (
+            {currentNode.options?.map((option, index) => (
               <OptionButton
                 key={index}
                 $visible={visibleOptions[index] || false}
+                onClick={() => handleOptionClick(option)}
               >
                 {option}
               </OptionButton>
