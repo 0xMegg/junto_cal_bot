@@ -4,18 +4,25 @@ import React, { useState } from "react";
 import { Message, ChatbotProps, TimeSlot } from "@/types/chat";
 import ScheduleGrid from "./ScheduleGrid";
 
-const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      text: "안녕하세요! 당신의 이름을 알려주세요.",
-      sender: "bot",
-    },
-  ]);
+const Chatbot: React.FC<ChatbotProps> = ({
+  onNameConfirm,
+  onScheduleConfirm,
+}) => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [userName, setUserName] = useState("");
   const [isNameConfirmed, setIsNameConfirmed] = useState(false);
   const [selectedTimes, setSelectedTimes] = useState<TimeSlot[]>([]);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+
+  React.useEffect(() => {
+    const initialMessage: Message = {
+      text: "안녕하세요! 당신의 이름을 알려주세요.",
+      sender: "bot",
+    };
+    addMessageWithTypingEffect(initialMessage);
+  }, []);
 
   const handleTimeSelect = (day: string, hour: number) => {
     setSelectedTimes((prev) => {
@@ -31,7 +38,103 @@ const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
     });
   };
 
-  const handleScheduleConfirm = () => {
+  const addMessageWithTypingEffect = async (message: Message) => {
+    setIsTyping(true);
+    const tempMessage = { ...message, text: "", isTyping: true };
+    setMessages((prev) => [...prev, tempMessage]);
+
+    const textToType = message.text;
+    let currentText = "";
+
+    for (let i = 0; i < textToType.length; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 30)); // 타이핑 속도 조절
+      currentText += textToType[i];
+      setMessages((prev) =>
+        prev.map((msg, idx) =>
+          idx === prev.length - 1 ? { ...msg, text: currentText } : msg
+        )
+      );
+    }
+
+    setMessages((prev) =>
+      prev.map((msg, idx) =>
+        idx === prev.length - 1 ? { ...message, isTyping: false } : msg
+      )
+    );
+    setIsTyping(false);
+  };
+
+  const handleConfirmResponse = async (isConfirmed: boolean) => {
+    const response = isConfirmed ? "네" : "아니오";
+    const userMessage: Message = {
+      text: response,
+      sender: "user",
+    };
+    setMessages((prev) =>
+      prev.map((msg) => ({ ...msg, showConfirmButtons: false }))
+    );
+    setMessages((prev) => [...prev, userMessage]);
+
+    if (!isNameConfirmed) {
+      if (isConfirmed) {
+        const botResponse: Message = {
+          text: `환영합니다, ${userName}님! 이제 준토에 참여하고 싶은 시간을 선택해주세요.(복수 선택 가능)`,
+          sender: "bot",
+        };
+        setIsNameConfirmed(true);
+        await addMessageWithTypingEffect(botResponse);
+        setShowSchedule(true);
+        onNameConfirm(userName);
+      } else {
+        setUserName("");
+        const botResponse: Message = {
+          text: "죄송합니다. 다시 한 번 이름을 알려주시겠어요?",
+          sender: "bot",
+        };
+        await addMessageWithTypingEffect(botResponse);
+      }
+    } else {
+      if (isConfirmed) {
+        const botResponse: Message = {
+          text: "선택하신 시간이 저장되었습니다.",
+          sender: "bot",
+        };
+        await addMessageWithTypingEffect(botResponse);
+        onScheduleConfirm(selectedTimes);
+      } else {
+        const botResponse: Message = {
+          text: "다시 선택해주세요.",
+          sender: "bot",
+        };
+        await addMessageWithTypingEffect(botResponse);
+        setShowSchedule(true);
+      }
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isTyping) return;
+
+    const userMessage: Message = {
+      text: inputText,
+      sender: "user",
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    if (!isNameConfirmed && userName === "") {
+      setUserName(inputText);
+      const botResponse: Message = {
+        text: `${inputText}님이 맞으신가요?`,
+        sender: "bot",
+        showConfirmButtons: true,
+      };
+      await addMessageWithTypingEffect(botResponse);
+    }
+
+    setInputText("");
+  };
+
+  const handleScheduleConfirm = async () => {
     const dayOrder = ["월", "화", "수", "목", "금", "토", "일"];
 
     // 요일별로 시간을 그룹화
@@ -55,51 +158,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
       .join("\n");
 
     const confirmMessage: Message = {
-      text: `선택하신 시간이\n${timeStrings}\n맞으신가요? (네/아니오)`,
+      text: `선택하신 시간이\n${timeStrings}\n맞으신가요?`,
       sender: "bot",
+      showConfirmButtons: true,
     };
-    setMessages((prev) => [...prev, confirmMessage]);
     setShowSchedule(false);
-  };
-
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
-
-    const userMessage: Message = {
-      text: inputText,
-      sender: "user",
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-
-    if (!isNameConfirmed) {
-      if (userName === "") {
-        setUserName(inputText);
-        const botResponse: Message = {
-          text: `${inputText}님이 맞으신가요? (네/아니오로 답변해주세요)`,
-          sender: "bot",
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      } else if (inputText.toLowerCase() === "네") {
-        const botResponse: Message = {
-          text: `환영합니다, ${userName}님! 이제 준토에 참여하고 싶은 시간을 선택해주세요.`,
-          sender: "bot",
-        };
-        setIsNameConfirmed(true);
-        setShowSchedule(true);
-        onNameConfirm(userName);
-        setMessages((prev) => [...prev, botResponse]);
-      } else if (inputText.toLowerCase() === "아니오") {
-        setUserName("");
-        const botResponse: Message = {
-          text: "죄송합니다. 다시 한 번 이름을 알려주시겠어요?",
-          sender: "bot",
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    }
-
-    setInputText("");
+    await addMessageWithTypingEffect(confirmMessage);
   };
 
   return (
@@ -108,17 +172,40 @@ const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`max-w-[70%] rounded-lg p-2 mb-2 shadow-sm whitespace-pre-line ${
-              message.sender === "user"
-                ? "bg-blue-500 text-white ml-auto"
-                : "bg-white mr-auto"
-            }`}
+            className={
+              message.sender === "user" ? "flex flex-col items-end" : ""
+            }
           >
-            {message.text}
+            <div
+              className={`inline-block rounded-lg p-2 mb-2 shadow-sm whitespace-pre-line ${
+                message.sender === "user"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white"
+              }`}
+            >
+              {message.text}
+              {message.isTyping && "▋"}
+            </div>
+            {message.showConfirmButtons && !message.isTyping && (
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => handleConfirmResponse(true)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  네
+                </button>
+                <button
+                  onClick={() => handleConfirmResponse(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  아니오
+                </button>
+              </div>
+            )}
           </div>
         ))}
         {showSchedule && (
-          <div className="my-4">
+          <div className="my-4 animate-fade-in">
             <ScheduleGrid
               onTimeSelect={handleTimeSelect}
               selectedTimes={selectedTimes}

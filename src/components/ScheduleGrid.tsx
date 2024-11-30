@@ -15,9 +15,6 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
   return (
     <div className="w-full overflow-x-auto">
-      <div className="text-sm font-medium mb-2">
-        준토에 참여하고 싶은 시간을 선택해주세요 (복수 선택 가능)
-      </div>
       <div className="grid grid-cols-8 gap-1">
         <div className="h-8"></div>
         {days.map((day) => (
