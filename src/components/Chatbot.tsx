@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Message, ChatbotProps } from "@/types/chat";
+import { Message, ChatbotProps, TimeSlot } from "@/types/chat";
+import ScheduleGrid from "./ScheduleGrid";
 
 const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -13,6 +14,53 @@ const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
   const [inputText, setInputText] = useState("");
   const [userName, setUserName] = useState("");
   const [isNameConfirmed, setIsNameConfirmed] = useState(false);
+  const [selectedTimes, setSelectedTimes] = useState<TimeSlot[]>([]);
+  const [showSchedule, setShowSchedule] = useState(false);
+
+  const handleTimeSelect = (day: string, hour: number) => {
+    setSelectedTimes((prev) => {
+      const existingIndex = prev.findIndex(
+        (slot) => slot.day === day && slot.hour === hour
+      );
+
+      if (existingIndex >= 0) {
+        return prev.filter((_, index) => index !== existingIndex);
+      }
+
+      return [...prev, { day, hour, isSelected: true }];
+    });
+  };
+
+  const handleScheduleConfirm = () => {
+    const dayOrder = ["월", "화", "수", "목", "금", "토", "일"];
+
+    // 요일별로 시간을 그룹화
+    const timesByDay = selectedTimes.reduce((acc, time) => {
+      if (!acc[time.day]) {
+        acc[time.day] = [];
+      }
+      acc[time.day].push(time.hour);
+      return acc;
+    }, {} as Record<string, number[]>);
+
+    // 요일 순서대로 정렬하고 시간도 정렬
+    const timeStrings = dayOrder
+      .filter((day) => timesByDay[day]) // 선택된 요일만 필터링
+      .map((day) => {
+        const sortedHours = timesByDay[day].sort((a, b) => a - b);
+        return `${day}요일 : ${sortedHours
+          .map((hour) => `${hour}시`)
+          .join(", ")}`;
+      })
+      .join("\n");
+
+    const confirmMessage: Message = {
+      text: `선택하신 시간이\n${timeStrings}\n맞으신가요? (네/아니오)`,
+      sender: "bot",
+    };
+    setMessages((prev) => [...prev, confirmMessage]);
+    setShowSchedule(false);
+  };
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
@@ -34,10 +82,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
         setMessages((prev) => [...prev, botResponse]);
       } else if (inputText.toLowerCase() === "네") {
         const botResponse: Message = {
-          text: `환영합니다, ${userName}님! 무엇을 도와드릴까요?`,
+          text: `환영합니다, ${userName}님! 이제 준토에 참여하고 싶은 시간을 선택해주세요.`,
           sender: "bot",
         };
         setIsNameConfirmed(true);
+        setShowSchedule(true);
         onNameConfirm(userName);
         setMessages((prev) => [...prev, botResponse]);
       } else if (inputText.toLowerCase() === "아니오") {
@@ -54,12 +103,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
   };
 
   return (
-    <div className="w-[400px] h-[600px] border border-gray-200 rounded-lg flex flex-col bg-white">
+    <div className="w-[800px] h-[calc(100vh-80px)] border border-gray-200 rounded-lg flex flex-col bg-white">
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`max-w-[70%] rounded-lg p-2 mb-2 shadow-sm ${
+            className={`max-w-[70%] rounded-lg p-2 mb-2 shadow-sm whitespace-pre-line ${
               message.sender === "user"
                 ? "bg-blue-500 text-white ml-auto"
                 : "bg-white mr-auto"
@@ -68,6 +117,15 @@ const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
             {message.text}
           </div>
         ))}
+        {showSchedule && (
+          <div className="my-4">
+            <ScheduleGrid
+              onTimeSelect={handleTimeSelect}
+              selectedTimes={selectedTimes}
+              onConfirm={handleScheduleConfirm}
+            />
+          </div>
+        )}
       </div>
       <div className="flex p-4 border-t border-gray-200 bg-white">
         <input
