@@ -1,142 +1,92 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import styled from "styled-components";
+import React, { useState } from "react";
+import { Message, ChatbotProps } from "@/types/chat";
 
-interface DialogueNode {
-  content: string;
-  options?: string[];
-  next?: { [key: string]: DialogueNode };
-}
+const Chatbot: React.FC<ChatbotProps> = ({ onNameConfirm }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState("");
+  const [userName, setUserName] = useState("");
+  const [isNameConfirmed, setIsNameConfirmed] = useState(false);
 
-const ChatContainer = styled.div`
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-`;
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
 
-const MessageBubble = styled.div<{ $isBot: boolean }>`
-  display: flex;
-  justify-content: ${(props) => (props.$isBot ? "flex-start" : "flex-end")};
-  margin: 10px 0;
-`;
+    const userMessage: Message = {
+      text: inputText,
+      sender: "user",
+    };
 
-const BubbleContent = styled.div<{ $isBot: boolean }>`
-  background-color: ${(props) => (props.$isBot ? "#e9ecef" : "#007bff")};
-  color: ${(props) => (props.$isBot ? "#000" : "#fff")};
-  padding: 10px 15px;
-  border-radius: 15px;
-  max-width: 70%;
-`;
+    setMessages((prev) => [...prev, userMessage]);
 
-const OptionsContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
-`;
-
-const OptionButton = styled.button<{ $visible: boolean }>`
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 15px;
-  cursor: pointer;
-  opacity: ${(props) => (props.$visible ? 1 : 0)};
-  transform: translateY(${(props) => (props.$visible ? 0 : "10px")});
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  &:hover {
-    background-color: #0056b3;
-  }
-`;
-
-const dialogueTree: DialogueNode = {
-  content: "질문 1",
-  options: ["대답버튼1", "대답버튼2", "대답버튼3"],
-  next: {
-    대답버튼1: {
-      content: "질문 2-1",
-      options: ["대답 2-1-1", "대답 2-1-2", "대답 2-1-3"],
-    },
-    대답버튼2: {
-      content: "질문 2-2",
-      options: ["대답 2-2-1", "대답 2-2-2", "대답 2-2-3"],
-    },
-    대답버튼3: {
-      content: "질문 2-3",
-      options: ["대답 2-3-1", "대답 2-3-2", "대답 2-3-3"],
-    },
-  },
-};
-
-const Chatbot = () => {
-  const [displayedText, setDisplayedText] = useState("");
-  const [isTyping, setIsTyping] = useState(true);
-  const [visibleOptions, setVisibleOptions] = useState<boolean[]>([]);
-  const [currentNode, setCurrentNode] = useState<DialogueNode>(dialogueTree);
-
-  const handleOptionClick = (option: string) => {
-    if (currentNode.next && currentNode.next[option]) {
-      setCurrentNode(currentNode.next[option]);
+    if (!isNameConfirmed) {
+      if (userName === "") {
+        setUserName(inputText);
+        const botResponse: Message = {
+          text: `${inputText}님이 맞으신가요? (네/아니오로 답변해주세요)`,
+          sender: "bot",
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      } else if (inputText.toLowerCase() === "네") {
+        const botResponse: Message = {
+          text: `환영합니다, ${userName}님! 무엇을 도와드릴까요?`,
+          sender: "bot",
+        };
+        setIsNameConfirmed(true);
+        onNameConfirm(userName);
+        setMessages((prev) => [...prev, botResponse]);
+      } else if (inputText.toLowerCase() === "아니오") {
+        setUserName("");
+        const botResponse: Message = {
+          text: "죄송합니다. 다시 한 번 이름을 알려주시겠어요?",
+          sender: "bot",
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      }
     }
+
+    setInputText("");
   };
 
-  useEffect(() => {
-    if (!isTyping && currentNode.options) {
-      currentNode.options.forEach((_, index) => {
-        setTimeout(() => {
-          setVisibleOptions((prev) => {
-            const newVisible = [...prev];
-            newVisible[index] = true;
-            return newVisible;
-          });
-        }, index * 300);
-      });
-    }
-  }, [isTyping, currentNode.options]);
-
-  useEffect(() => {
-    let index = 0;
-    setIsTyping(true);
-    setDisplayedText("");
-    setVisibleOptions([]);
-
-    const typingInterval = setInterval(() => {
-      if (index < currentNode.content.length) {
-        setDisplayedText(currentNode.content.slice(0, index + 1));
-        index++;
-      } else {
-        setIsTyping(false);
-        clearInterval(typingInterval);
-      }
-    }, 50);
-
-    return () => clearInterval(typingInterval);
-  }, [currentNode]);
-
   return (
-    <ChatContainer>
-      <MessageBubble $isBot={true}>
-        <BubbleContent $isBot={true}>{displayedText}</BubbleContent>
-      </MessageBubble>
-
-      {!isTyping && (
-        <OptionsContainer>
-          <BubbleContent $isBot={false}>
-            {currentNode.options?.map((option, index) => (
-              <OptionButton
-                key={index}
-                $visible={visibleOptions[index] || false}
-                onClick={() => handleOptionClick(option)}
-              >
-                {option}
-              </OptionButton>
-            ))}
-          </BubbleContent>
-        </OptionsContainer>
-      )}
-    </ChatContainer>
+    <div className="w-[300px] h-[400px] border border-gray-200 rounded-lg flex flex-col">
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.length === 0 ? (
+          <div className="text-center text-gray-600 mt-5">
+            안녕하세요! 당신의 이름을 알려주세요.
+          </div>
+        ) : (
+          messages.map((message, index) => (
+            <div
+              key={index}
+              className={`max-w-[70%] rounded-lg p-2 mb-2 ${
+                message.sender === "user"
+                  ? "bg-blue-500 text-white ml-auto"
+                  : "bg-gray-100 mr-auto"
+              }`}
+            >
+              {message.text}
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex p-4 border-t border-gray-200">
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+          placeholder="메시지를 입력하세요..."
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          onClick={handleSendMessage}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          전송
+        </button>
+      </div>
+    </div>
   );
 };
 
