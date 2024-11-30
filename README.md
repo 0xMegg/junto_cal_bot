@@ -1,34 +1,57 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Junto Calendar Bot
 
-## Getting Started
+[https://0xmegg.github.io/junto_cal_bot](https://0xmegg.github.io/junto_cal_bot)
 
-First, run the development server:
+일정 관리를 도와주는 AI 챗봇 서비스입니다. 자연스러운 대화를 통해 일정을 등록하고 관리할 수 있습니다.
+
+## 주요 기능
+
+- 💬 자연어로 일정 등록하기
+- 📅 직관적인 캘린더 뷰
+- 🤖 AI 기반 일정 관리 도우미
+- 📱 반응형 디자인
+
+## 기술 스택
+
+- **Frontend**: Next.js, TypeScript, Tailwind CSS
+- **배포**: GitHub Pages
+
+## 시작하기
+
+1. 저장소 클론:
+
+```bash
+git clone https://github.com/0xmegg/junto_cal_bot.git
+cd junto_cal_bot
+```
+
+2. 의존성 설치:
+
+```bash
+npm install
+```
+
+3. 개발 서버 실행:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. 브라우저에서 [http://localhost:3000](http://localhost:3000)으로 접속
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 프로젝트 구조
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```
+src/
+├── app/              # Next.js 앱 라우터
+├── components/       # 재사용 가능한 컴포넌트
+│   ├── Chatbot.tsx
+│   ├── Footer.tsx
+│   └── ScheduleGrid.tsx
+└── types/           # TypeScript 타입 정의
+    └── chat.ts
+```
 
-## Learn More
+## 라이선스
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+이 프로젝트는 MIT 라이선스를 따릅니다.
