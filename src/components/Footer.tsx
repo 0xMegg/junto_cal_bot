@@ -36,23 +36,23 @@ const Footer: React.FC<FooterProps> = ({
 
   return (
     <footer className="bg-gray-100 h-[120px] flex items-center">
-      <div className="container mx-auto text-center">
+      <div className="container mx-auto text-center h-full flex items-center">
         {userName ? (
-          <div className="space-y-2 min-h-[72px]">
+          <div className="w-full space-y-2">
             <p className="text-gray-600 h-[24px]">{userName}님 환영합니다!</p>
-            <p className="text-sm text-green-600 h-[24px]">
-              {possibleTimes && possibleTimes.length > 0
-                ? `참여 가능 시간: ${formatSchedule(possibleTimes)}`
-                : "\u00A0"}
-            </p>
-            <p className="text-sm text-red-600 h-[24px]">
-              {impossibleTimes && impossibleTimes.length > 0
-                ? `참여 불가능 시간: ${formatSchedule(impossibleTimes)}`
-                : "\u00A0"}
-            </p>
+            {possibleTimes && possibleTimes.length > 0 && (
+              <p className="text-sm text-green-600 h-[24px]">
+                참여 가능 시간: {formatSchedule(possibleTimes)}
+              </p>
+            )}
+            {impossibleTimes && impossibleTimes.length > 0 && (
+              <p className="text-sm text-red-600 h-[24px]">
+                참여 불가능 시간: {formatSchedule(impossibleTimes)}
+              </p>
+            )}
           </div>
         ) : (
-          <div className="min-h-[72px] flex items-center justify-center">
+          <div className="w-full">
             <p className="text-gray-600">채팅창에서 이름을 입력해주세요.</p>
           </div>
         )}
