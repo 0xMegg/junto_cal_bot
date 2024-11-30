@@ -16,6 +16,8 @@ const Chatbot: React.FC<ChatbotProps> = ({
   const [showSchedule, setShowSchedule] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isSelectingImpossible, setIsSelectingImpossible] = useState(false);
+  const [showInput, setShowInput] = useState(true);
+  const [inputOpacity, setInputOpacity] = useState(1);
 
   React.useEffect(() => {
     const initialMessage: Message = {
@@ -83,6 +85,8 @@ const Chatbot: React.FC<ChatbotProps> = ({
           sender: "bot",
         };
         setIsNameConfirmed(true);
+        setInputOpacity(0);
+        setTimeout(() => setShowInput(false), 1000);
         await addMessageWithTypingEffect(botResponse);
         setShowSchedule(true);
         onNameConfirm(userName);
@@ -241,22 +245,27 @@ const Chatbot: React.FC<ChatbotProps> = ({
           </div>
         )}
       </div>
-      <div className="flex p-4 border-t border-gray-200 bg-white">
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-          placeholder="메시지를 입력하세요..."
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          onClick={handleSendMessage}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+      {showInput && (
+        <div
+          className="flex p-4 border-t border-gray-200 bg-white transition-all duration-1000 ease-in-out"
+          style={{ opacity: inputOpacity }}
         >
-          전송
-        </button>
-      </div>
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+            placeholder="메시지를 입력하세요..."
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={handleSendMessage}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            전송
+          </button>
+        </div>
+      )}
     </div>
   );
 };
