@@ -19,6 +19,10 @@ const Chatbot: React.FC<ChatbotProps> = ({
   const [showInput, setShowInput] = useState(true);
   const [inputOpacity, setInputOpacity] = useState(1);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const [scheduleHeight, setScheduleHeight] = useState<number>(0);
+  const scheduleRef = React.useRef<HTMLDivElement>(null);
+  const [showBlackBox, setShowBlackBox] = useState(false);
+  const [blackBoxHeight, setBlackBoxHeight] = useState<number | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,6 +39,12 @@ const Chatbot: React.FC<ChatbotProps> = ({
     };
     addMessageWithTypingEffect(initialMessage);
   }, []);
+
+  React.useEffect(() => {
+    if (showSchedule && scheduleRef.current) {
+      setScheduleHeight(scheduleRef.current.offsetHeight);
+    }
+  }, [showSchedule]);
 
   const handleTimeSelect = (day: string, hour: number) => {
     setSelectedTimes((prev) => {
@@ -184,6 +194,16 @@ const Chatbot: React.FC<ChatbotProps> = ({
   };
 
   const handleScheduleConfirm = async () => {
+    setShowBlackBox(true);
+    setBlackBoxHeight(scheduleHeight);
+    setShowSchedule(false);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setBlackBoxHeight(0);
+      });
+    });
+
     const dayOrder = ["월", "화", "수", "목", "금", "토", "일"];
 
     const timesByDay = selectedTimes.reduce((acc, time) => {
@@ -211,8 +231,12 @@ const Chatbot: React.FC<ChatbotProps> = ({
       sender: "bot",
       showConfirmButtons: true,
     };
-    setShowSchedule(false);
+
     await addMessageWithTypingEffect(confirmMessage);
+
+    setTimeout(() => {
+      setShowBlackBox(false);
+    }, 1000);
   };
 
   return (
@@ -253,8 +277,8 @@ const Chatbot: React.FC<ChatbotProps> = ({
             )}
           </div>
         ))}
-        {showSchedule && (
-          <div className="my-4 animate-fade-in">
+        {showSchedule ? (
+          <div ref={scheduleRef} className="my-4 animate-fade-in">
             <ScheduleGrid
               onTimeSelect={handleTimeSelect}
               selectedTimes={selectedTimes}
@@ -262,7 +286,17 @@ const Chatbot: React.FC<ChatbotProps> = ({
               isSelectingImpossible={isSelectingImpossible}
             />
           </div>
-        )}
+        ) : showBlackBox && scheduleHeight > 0 ? (
+          <div
+            className="my-4 transition-all duration-1000 ease-in-out"
+            style={{
+              height: `${blackBoxHeight}px`,
+              opacity: blackBoxHeight === 0 ? 0 : 1,
+              marginTop: blackBoxHeight === 0 ? "0rem" : "1rem",
+              marginBottom: blackBoxHeight === 0 ? "0rem" : "1rem",
+            }}
+          />
+        ) : null}
         <div ref={messagesEndRef} />
       </div>
       {showInput && (
