@@ -7,14 +7,19 @@ import { TimeSlot } from "@/types/chat";
 
 export default function Home() {
   const [userName, setUserName] = useState("");
-  const [selectedTimes, setSelectedTimes] = useState<TimeSlot[]>([]);
+  const [possibleTimes, setPossibleTimes] = useState<TimeSlot[]>([]);
+  const [impossibleTimes, setImpossibleTimes] = useState<TimeSlot[]>([]);
 
   const handleNameConfirm = (name: string) => {
     setUserName(name);
   };
 
-  const handleScheduleConfirm = (times: TimeSlot[]) => {
-    setSelectedTimes(times);
+  const handleScheduleConfirm = (times: TimeSlot[], isImpossible: boolean) => {
+    if (isImpossible) {
+      setImpossibleTimes(times);
+    } else {
+      setPossibleTimes(times);
+    }
   };
 
   return (
@@ -25,7 +30,11 @@ export default function Home() {
           onScheduleConfirm={handleScheduleConfirm}
         />
       </div>
-      <Footer userName={userName} selectedTimes={selectedTimes} />
+      <Footer
+        userName={userName}
+        possibleTimes={possibleTimes}
+        impossibleTimes={impossibleTimes}
+      />
     </main>
   );
 }

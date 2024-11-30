@@ -5,16 +5,65 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   onTimeSelect,
   selectedTimes,
   onConfirm,
+  isSelectingImpossible,
 }) => {
   const days = ["월", "화", "수", "목", "금", "토", "일"];
-  const hours = [8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+  const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
 
   const isSelected = (day: string, hour: number) => {
     return selectedTimes.some((time) => time.day === day && time.hour === hour);
   };
 
+  const getButtonStyle = (day: string, hour: number) => {
+    const isPossible = isPossibleTime(day, hour);
+    const selected = isSelected(day, hour);
+
+    if (isSelectingImpossible) {
+      if (isPossible) {
+        return "bg-green-400";
+      }
+      if (selected) {
+        return "bg-red-500 hover:bg-red-600";
+      }
+    } else {
+      if (selected) {
+        return "bg-green-500 hover:bg-green-600";
+      }
+    }
+
+    return "bg-gray-100 hover:bg-blue-100";
+  };
+
+  const isPossibleTime = (day: string, hour: number) => {
+    const possibleTimes = JSON.parse(
+      localStorage.getItem("possibleTimes") || "[]"
+    );
+    return possibleTimes.some(
+      (time: TimeSlot) => time.day === day && time.hour === hour
+    );
+  };
+
+  const handleTimeClick = (day: string, hour: number) => {
+    if (isSelectingImpossible && isPossibleTime(day, hour)) {
+      return;
+    }
+    onTimeSelect(day, hour);
+  };
+
+  const handleConfirm = () => {
+    if (!isSelectingImpossible) {
+      localStorage.setItem("possibleTimes", JSON.stringify(selectedTimes));
+    }
+    onConfirm();
+  };
+
   return (
     <div className="w-full overflow-x-auto">
+      <div className="text-sm font-medium mb-2">
+        {isSelectingImpossible
+          ? "참여가 불가능한 시간을 선택해주세요 (복수 선택 가능)"
+          : "준토에 참여하고 싶은 시간을 선택해주세요 (복수 선택 가능)"}
+      </div>
       <div className="grid grid-cols-8 gap-1">
         <div className="h-8"></div>
         {days.map((day) => (
@@ -33,11 +82,15 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
             {days.map((day) => (
               <button
                 key={`${day}-${hour}`}
-                onClick={() => onTimeSelect(day, hour)}
-                className={`h-8 transition-colors rounded-sm ${
-                  isSelected(day, hour)
-                    ? "bg-blue-500 hover:bg-blue-600"
-                    : "bg-gray-100 hover:bg-blue-100"
+                onClick={() => handleTimeClick(day, hour)}
+                disabled={isSelectingImpossible && isPossibleTime(day, hour)}
+                className={`h-8 transition-colors rounded-sm ${getButtonStyle(
+                  day,
+                  hour
+                )} ${
+                  isSelectingImpossible && isPossibleTime(day, hour)
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
               />
             ))}
@@ -47,7 +100,7 @@ const ScheduleGrid: React.FC<ScheduleGridProps> = ({
       {selectedTimes.length > 0 && (
         <div className="mt-4 flex justify-end">
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             선택 완료

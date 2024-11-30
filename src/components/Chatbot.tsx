@@ -15,6 +15,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
   const [selectedTimes, setSelectedTimes] = useState<TimeSlot[]>([]);
   const [showSchedule, setShowSchedule] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isSelectingImpossible, setIsSelectingImpossible] = useState(false);
 
   React.useEffect(() => {
     const initialMessage: Message = {
@@ -95,12 +96,37 @@ const Chatbot: React.FC<ChatbotProps> = ({
       }
     } else {
       if (isConfirmed) {
-        const botResponse: Message = {
-          text: "선택하신 시간이 저장되었습니다.",
-          sender: "bot",
-        };
-        await addMessageWithTypingEffect(botResponse);
-        onScheduleConfirm(selectedTimes);
+        if (isSelectingImpossible) {
+          const saveMessage: Message = {
+            text: "선택하신 시간이 저장되었습니다.",
+            sender: "bot",
+          };
+          await addMessageWithTypingEffect(saveMessage);
+
+          const thankMessage: Message = {
+            text: "응답해 주셔서 감사합니다!",
+            sender: "bot",
+          };
+          await addMessageWithTypingEffect(thankMessage);
+
+          onScheduleConfirm(selectedTimes, true); // 불가능 시간 저장
+        } else {
+          const saveMessage: Message = {
+            text: "선택하신 시간이 저장되었습니다.",
+            sender: "bot",
+          };
+          await addMessageWithTypingEffect(saveMessage);
+
+          const nextMessage: Message = {
+            text: "이제 참여가 불가능한 시간을 선택해주세요 (복수 선택 가능)",
+            sender: "bot",
+          };
+          await addMessageWithTypingEffect(nextMessage);
+
+          setIsSelectingImpossible(true);
+          setShowSchedule(true);
+          onScheduleConfirm(selectedTimes, false); // 가능 시간 저장
+        }
       } else {
         const botResponse: Message = {
           text: "다시 선택해주세요.",
@@ -137,7 +163,6 @@ const Chatbot: React.FC<ChatbotProps> = ({
   const handleScheduleConfirm = async () => {
     const dayOrder = ["월", "화", "수", "목", "금", "토", "일"];
 
-    // 요일별로 시간을 그룹화
     const timesByDay = selectedTimes.reduce((acc, time) => {
       if (!acc[time.day]) {
         acc[time.day] = [];
@@ -146,9 +171,8 @@ const Chatbot: React.FC<ChatbotProps> = ({
       return acc;
     }, {} as Record<string, number[]>);
 
-    // 요일 순서대로 정렬하고 시간도 정렬
     const timeStrings = dayOrder
-      .filter((day) => timesByDay[day]) // 선택된 요일만 필터링
+      .filter((day) => timesByDay[day])
       .map((day) => {
         const sortedHours = timesByDay[day].sort((a, b) => a - b);
         return `${day}요일 : ${sortedHours
@@ -158,7 +182,9 @@ const Chatbot: React.FC<ChatbotProps> = ({
       .join("\n");
 
     const confirmMessage: Message = {
-      text: `선택하신 시간이\n${timeStrings}\n맞으신가요?`,
+      text: `선택하신 ${
+        isSelectingImpossible ? "불가능한" : "참여 희망"
+      } 시간이\n${timeStrings}\n맞으신가요?`,
       sender: "bot",
       showConfirmButtons: true,
     };
@@ -167,7 +193,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
   };
 
   return (
-    <div className="w-[800px] h-[calc(100vh-80px)] border border-gray-200 rounded-lg flex flex-col bg-white">
+    <div className="w-[800px] h-[calc(100vh-120px)] border border-gray-200 rounded-lg flex flex-col bg-white">
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         {messages.map((message, index) => (
           <div
@@ -210,6 +236,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
               onTimeSelect={handleTimeSelect}
               selectedTimes={selectedTimes}
               onConfirm={handleScheduleConfirm}
+              isSelectingImpossible={isSelectingImpossible}
             />
           </div>
         )}
