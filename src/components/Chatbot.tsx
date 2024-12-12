@@ -108,6 +108,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
         setTimeout(() => setShowInput(false), 1000);
         await addMessageWithTypingEffect(botResponse);
         setShowSchedule(true);
+        console.log("사용자 이름:", userName);
         onNameConfirm(userName);
       } else {
         setUserName("");
@@ -136,6 +137,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
             ...time,
             isImpossible: true,
           }));
+          console.log("불가능한 시간:", impossibleTimes);
           onScheduleConfirm(impossibleTimes, true);
         } else {
           const saveMessage: Message = {
@@ -154,6 +156,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
             ...time,
             isImpossible: false,
           }));
+          console.log("참여 가능한 시간:", possibleTimes);
           onScheduleConfirm(possibleTimes, false);
 
           setSelectedTimes([]);
